@@ -1,0 +1,46 @@
+
+name: Build Taxist APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Extract project archive
+        run: |
+          unzip -o TaxistPhone_package.zip -d extracted
+          find extracted -name settings.gradle -o -name settings.gradle.kts
+
+      - name: Install Gradle
+        run: |
+          wget https://services.gradle.org/distributions/gradle-8.7-bin.zip
+          unzip gradle-8.7-bin.zip
+          echo "$PWD/gradle-8.7/bin" >> $GITHUB_PATH
+
+      - name: Build APK
+        run: |
+          cd extracted
+          PROJECT=$(find . -name settings.gradle -o -name settings.gradle.kts | head -1)
+          cd "$(dirname "$PROJECT")"
+          gradle assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Taxist-debug-apk
+          path: extracted/**/build/outputs/apk/debug/*.apk
