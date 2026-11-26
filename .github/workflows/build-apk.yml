@@ -20,23 +20,26 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
-      - name: Accept Android licenses
-        run: yes | sdkmanager --licenses
+
+      - name: Accept Android SDK licenses
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+
       - name: Extract project archive
         run: |
           unzip -o TaxistPhone_package.zip -d extracted
-          find extracted -name settings.gradle -o -name settings.gradle.kts
 
       - name: Install Gradle
         run: |
           wget https://services.gradle.org/distributions/gradle-8.7-bin.zip
-          unzip gradle-8.7-bin.zip
-          echo "$PWD/gradle-8.7/bin" >> $GITHUB_PATH
+          unzip -q gradle-8.7-bin.zip
+          echo "$PWD/gradle-8.7/bin" >> "$GITHUB_PATH"
 
       - name: Build APK
         run: |
           cd extracted
-          PROJECT=$(find . -name settings.gradle -o -name settings.gradle.kts | head -1)
+          PROJECT=$(find . \( -name settings.gradle -o -name settings.gradle.kts \) -print -quit)
+          test -n "$PROJECT"
           cd "$(dirname "$PROJECT")"
           gradle assembleDebug
 
